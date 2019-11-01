@@ -8,7 +8,6 @@ const databaseName = "icebrekr-development";
 const coverageUrl = `http://localhost:9000/.inspect/coverage?ns=${databaseName}`;
 const rules = fs.readFileSync("database.rules.json", "utf8");
 export const uid = "3kQFEZoivmWgKQGQLtIzqGsA2I73"
-console.log(`View rule coverage information at ${coverageUrl}\n`);
 
 //static before === beforeAll method
 //before === beforeEach method
@@ -22,6 +21,7 @@ export abstract class Base {
 
     static async after() {
         // Close any open apps
+        console.log(`View rule coverage information at ${coverageUrl}\n`);
         return await Promise.all(firebase.apps().map(app => app.delete()));
     }
 
@@ -35,6 +35,11 @@ export abstract class Base {
             .set(mock)
     };
 
+    // async after() {
+        
+    //     return true;
+    // }
+
     public authedApp(auth: any) {
         return firebase.initializeTestApp({ databaseName, auth }).database();
     }
@@ -47,11 +52,7 @@ export abstract class Base {
         return firebase.initializeAdminApp({ databaseName }).database();
     }
 }
-// @suite('write rules:')
-// class UserWrites {
 
-//   
-// }
 
 
 

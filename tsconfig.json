@@ -5,6 +5,7 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "resolveJsonModule": true,
+        "outDir": "test/lib",
         "lib": [
             "es6",
             "dom"
