@@ -1,0 +1,163 @@
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+//     users table validation start
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null &&  $uid === auth.uid",
+				// hasChildren will check for all children even on 'update', which we only need on 'set'.
+				// hence commented this line. Keep this currently for reference.     
+        // ".validate": "newData.hasChildren(['avatar','name','dob','email','gender','mobile','personal','professional','profile','state'])",
+        "$dont_allow_other_keys": {
+          ".validate": false
+        },
+        "avatar": {
+          ".validate": "newData.isString() && newData.val().matches(/^(ht|f)tp(s?):\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*((0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\'\\/\\\\+&=%\\$#_]*)?$/)"
+        },
+        "name": {
+          ".validate": "newData.isString()"
+        },
+        "dob": {
+          ".validate": "newData.isString()"
+        },
+        "email": {
+          ".validate": "newData.val() === auth.email"
+        },
+        "gender": {
+          ".validate": "newData.isString() && (newData.val().matches(/^(male|female)$/i))"
+        },
+        "mobile": {
+          ".validate": "newData.isString()"
+        },
+        "personal": {
+          ".validate": "newData.isBoolean()"
+        },
+        "professional": {
+          ".validate": "newData.isBoolean()"
+        },
+        "state": {
+              ".validate": "newData.isString()"
+        },
+        "profile": {
+          "$dont_allow_other_keys": {
+              ".validate": false
+          	},
+          "personal": {
+            "$dont_allow_other_keys": {
+              ".validate": false
+          	},
+            "about": {
+              ".validate": "newData.isString()"
+            },
+            "activities": {
+              ".validate": "newData.isString()"
+            },
+            "music": {
+              ".validate": "newData.isString()"
+            },
+            "request_message": {
+              ".validate": "newData.isString()"
+            }
+          },
+          "professional": {
+            "$dont_allow_other_keys": {
+              ".validate": false
+          	},
+            "about": {
+              ".validate": "newData.isString()"
+            },
+            "request_message":{
+              ".validate": "newData.isString()"
+            }
+          }
+        }
+      }
+    },
+//     users table validation end
+//     company table validation start
+    "company": {
+      ".read": true,
+      ".write": false 
+    },
+//     notifications table validation start
+		"notifications": {
+      "$uid": {
+        ".read": "auth != null",
+			// notification will be created to the opp user so we cannot check the usual way of auth.uid == $uid.
+			// instead we can check whether the user is available in users table           
+        ".write": "auth != null &&  root.child('users').child(auth.uid).exists()",
+      	"$dont_allow_other_keys": {
+          ".validate": false
+        },
+        "notification_type": {
+          ".validate": "newData.isString() && (newData.val().matches(/^(message|icebrekr)$/i))"
+        },
+        // sender will be currently logged in hence checking the uid
+        "sender": {
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        }
+      } 
+    },
+//     notifications table validation end
+//     profiles table validation start
+		"profiles": {
+      "$uid" : {
+        ".read": "auth != null &&  $uid === auth.uid",
+        ".write": "auth != null &&  $uid === auth.uid",
+        "$type": {
+          ".validate": "$type === 'favorite'|| $type === 'favorite' || $type === 'connections'|| $type === 'blocked'",
+          //check both friend ID and friend name from users table to maintain multipath updates.
+          "$fid": {
+            ".validate": "root.child('users').child($fid).exists() && root.child('users').child($fid).child('name').val() === newData.child('name').val()",
+            "$dont_allow_other_keys": {
+              ".validate": false
+          	},
+            "name": {
+              ".validate": "newData.isString()"
+            },
+            "professional": {
+              ".validate": "newData.isBoolean()"
+            },
+            "personal": {
+              ".validate": "newData.isBoolean()"
+            }
+          }
+        }
+      }
+    },
+//     profiles table validation end
+//     chats table validation start
+		"chats": {
+      // chatid will be in format of sid_lid where sid is smallest uid and lid is largest id
+      "$chatid": {
+        ".read": "auth != null && $chatid.contains(auth.uid)",
+        ".write": "auth != null && $chatid.contains(auth.uid)",
+        "$mid": {
+          "$dont_allow_other_keys": {
+              ".validate": false
+          	},
+          "chatid": {
+            ".validate": "newData.val() === $chatid"
+          },
+          "media_url": {
+            ".validate": "!newData.exists() || newData.isString() && newData.val().matches(/^(ht|f)tp(s?):\\/\\/[0-9a-zA-Z]([-.\\w]*[0-9a-zA-Z])*((0-9)*)*(\\/?)([a-zA-Z0-9\\-\\.\\?\\,\\'\\/\\\\+&=%\\$#_]*)?$/)"
+          },
+          "message": {
+            ".validate": "newData.isString()"
+          },
+          "message_type": {
+            ".validate": "newData.isString() && newData.val().matches(/^(text|media)$/i)"
+          },
+          "sender": {
+            ".validate": "newData.val() === auth.uid"
+          },
+      		"sent_at": {
+            ".validate": "newData.val() < now"
+          }
+        }
+      }
+    }
+//     chats table validation 
+  }
+}
